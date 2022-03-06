@@ -17,7 +17,7 @@ namespace WebAPI.Controllers
     {
         //Loosely coupled
         //naming convention
-        //IoC Contanier // ınversion of Control
+        //IoC Contanier  ınversion of Control
         IProductService _productService;
 
         public ProductsController(IProductService productService)
