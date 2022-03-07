@@ -1,6 +1,8 @@
 ﻿using Business.Abstract;
+using Business.CCS;
 using Business.Constants;
 using Business.ValidationRules.FluentValidation;
+using Core.Aspects.Autofac.Validation;
 using Core.CrossCuttingConcerns.Validation;
 using Core.Utilities.Results;
 using DataAccess.Abstract;
@@ -26,11 +28,15 @@ namespace Business.Concrete
         [ValidationAspect(typeof(ProductValidator))]
         public IResult Add(Product product)
         {
-            
 
-            _productDal.Add(product);
 
-            return new SuccessResult(Messages.ProductAdded);
+            if (CheckIfProductCountOfCategoryCorrect(product.CategoryId).Success)
+            {
+                _productDal.Add(product);
+
+                return new SuccessResult(Messages.ProductAdded);
+            }
+            return new ErrorResult();
         }
 
         public IDataResult<List<Product>> GetAll()
@@ -64,5 +70,28 @@ namespace Business.Concrete
         {
             return new SuccessDataResult<List<ProductDetailDto>>(_productDal.GetProductDetails());
         }
+
+        [ValidationAspect(typeof(ProductValidator))]
+        public IResult Update(Product product)
+        {
+            var result = _productDal.GetAll(p => p.CategoryId == product.CategoryId).Count;
+            if (result >= 10)
+            {
+                return new ErrorResult(Messages.ProductCountOfCategoryError);
+            }
+            throw new NotImplementedException();
+        }
+
+        private IResult CheckIfProductCountOfCategoryCorrect(int categoryId)
+        {
+            //Select count (*) from products where categoryId=1
+            var result = _productDal.GetAll(p => p.CategoryId == categoryId).Count;
+            if (result >= 15)
+            {
+                return new ErrorResult(Messages.ProductCountOfCategoryError);
+            }
+            return new SuccessResult();
+        }
+
     }
 }
